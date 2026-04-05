@@ -39,4 +39,7 @@ const financialRecordSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Compound index to drastically speed up dashboard aggregations and date-bound queries
+financialRecordSchema.index({ deleted: 1, date: -1 });
+
 module.exports = mongoose.model("FinancialRecord", financialRecordSchema);

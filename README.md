@@ -161,3 +161,12 @@ Filters for `GET /api/records`:
 3. Verify category totals aggregate correctly.
 4. Verify recent activity returns latest records.
 5. Verify monthly and weekly trend buckets match seeded data.
+
+
+
+## Architectural Decisions & Optimization/ Tradeoffs
+
+The dashboard logic (`GET /api/dashboard/summary`) was deliberately designed with scale in mind. Rather than executing simple CRUD operations and manually computing totals in memory (which breaks on large datasets), the endpoint delegates heavy computations to **MongoDB Aggregation Pipelines**. Optimizations include:
+- **Date Bounding by Default:** The aggregations are strictly bounded to the last 6 months via a `$match` operator unless dates are provided. This guarantees that MongoDB CPU spikes are avoided, protecting the server against massive full-collection scans on historical databases.
+- **Concurrent Execution:** The sophisticated dashboard logic executes 5 separate heavy database queries simultaneously using `Promise.all()`, which slashes API latency horizontally instead of falling into sequential query bottlenecks.
+- **Caching Mechanism (For future scalability):** To handle extreme read-heavy concurrency without hammering the database, the architecture is ready to be wrapped in an in-memory Node cache (like `node-cache`) or a distributed **Redis Server**. The `GET /api/dashboard/summary` would directly return the cached response, and backend logic would be added to gracefully **invalidate the cache only when a new record is created, edited, or deleted.**
