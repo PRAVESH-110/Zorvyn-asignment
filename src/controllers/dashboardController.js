@@ -1,8 +1,11 @@
 const FinancialRecord = require("../models/FinancialRecord");
 
+const matchActive = { $match: { deleted: { $ne: true } } };
+
 const getDashboardSummary = async (req, res, next) => {
   try {
     const totals = await FinancialRecord.aggregate([
+      matchActive,
       {
         $group: {
           _id: "$type",
@@ -15,6 +18,7 @@ const getDashboardSummary = async (req, res, next) => {
     const totalExpenses = totals.find((item) => item._id === "expense")?.total || 0;
 
     const categoryTotals = await FinancialRecord.aggregate([
+      matchActive,
       {
         $group: {
           _id: "$category",
@@ -24,12 +28,13 @@ const getDashboardSummary = async (req, res, next) => {
       { $sort: { total: -1 } },
     ]);
 
-    const recentActivity = await FinancialRecord.find()
+    const recentActivity = await FinancialRecord.find({ deleted: { $ne: true } })
       .sort({ date: -1, createdAt: -1 })
       .limit(5)
       .populate("createdBy", "name role");
 
     const monthlyTrends = await FinancialRecord.aggregate([
+      matchActive,
       {
         $group: {
           _id: {
@@ -52,6 +57,7 @@ const getDashboardSummary = async (req, res, next) => {
     ]);
 
     const weeklyTrends = await FinancialRecord.aggregate([
+      matchActive,
       {
         $group: {
           _id: {
