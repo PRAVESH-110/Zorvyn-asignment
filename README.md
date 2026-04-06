@@ -67,10 +67,65 @@ npm install
 npm run dev
 ```
 
-## API Endpoints
 
+## Before testing any API endpoints, you must create the first admin user.
+
+🔹 Step 1: Bootstrap Admin
+
+Endpoint:
+
+POST /api/auth/bootstrap-admin
+Sample Request Body:
+{
+  "name": "Admin",
+  "email": "admin@test.com",
+  "password": "123456"
+}
+✅ Expected Responses
+201 Created → Admin user successfully created
+403 Forbidden → Admin already exists (bootstrap can only be used once)
+
+⚠️ Important Notes
+This endpoint works only when no users exist in the database
+It is designed to securely initialize the system
+If you get 403, it means:
+Admin is already created → proceed to login
+
+Step 2: Login
+
+Endpoint:
+POST /api/auth/login
+Sample Request Body:
+{
+  "email": "admin@test.com",
+  "password": "123456"
+}
+✅ Response
+{
+  "token": "your_jwt_token"
+}
+
+Save this token — you will need it for all protected routes
+
+Step 3: Use Token for Protected Routes
+
+Add this header to all requests:
+
+Authorization: Bearer <your_jwt_token>
+🧪 Quick Test Flow
+Call POST /api/auth/bootstrap-admin
+Call POST /api/auth/login
+Copy JWT token
+Test protected routes like:
+GET /api/users
+POST /api/records
+GET /api/dashboard/summary
+
+
+
+## API Endpoints
 ### Auth
-- `POST /api/auth/bootstrap-admin` - create first admin (works only when no users exist)
+- `POST /api/auth/bootstrap-admin` - bootstrap admin first before anything (works only when no users exist)
 - `POST /api/auth/login` - login and get JWT token
 - `POST /api/auth/register` - admin-only user creation
 
